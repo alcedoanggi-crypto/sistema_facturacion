@@ -12,6 +12,12 @@ Este proyecto nace de la necesidad de centralizar y automatizar los procesos de 
 *   **Interfaz Dinámica:** Renderizado de vistas fluidas utilizando el motor de plantillas Jinja2.
 
 ---
+## 🔒 Seguridad y Buenas Prácticas
+Este proyecto implementa estándares de seguridad para el manejo de credenciales:
+*   **Variables de Entorno:** Uso de `python-dotenv` para evitar el "hardcoding" de credenciales en el código fuente.
+*   **GitIgnore:** El archivo `.env` está excluido del control de versiones para proteger los accesos a la base de datos PostgreSQL.
+*   **Configuración Segura:** Se incluye un archivo `.env.example` como plantilla para despliegues locales sin comprometer la seguridad.
+---
 🗄️ Base de Datos
 El proyecto incluye un archivo database_schema.sql. Para replicar la base de datos, crea una base en PostgreSQL y ejecuta:
 psql -U tu_usuario -d nombre_db -f database_schema.sql

@@ -1,5 +1,5 @@
 # 📑 Sistema de Facturación Pro 🚀
-> **Solución integral de gestión comercial desarrollada en Python & PostgreSQL**
+> **Solución integral desarrollada en Python & PostgreSQL**
 
 Este proyecto nace de la necesidad de centralizar y automatizar los procesos de facturación, permitiendo un control preciso sobre las ventas y clientes bajo una arquitectura robusta y escalable.
 
@@ -12,7 +12,11 @@ Este proyecto nace de la necesidad de centralizar y automatizar los procesos de 
 *   **Interfaz Dinámica:** Renderizado de vistas fluidas utilizando el motor de plantillas Jinja2.
 
 ---
+🗄️ Base de Datos
+El proyecto incluye un archivo database_schema.sql. Para replicar la base de datos, crea una base en PostgreSQL y ejecuta:
+psql -U tu_usuario -d nombre_db -f database_schema.sql
 
+---
 ## 🛠️ Stack Tecnológico
 | Tecnología | Función |
 | :--- | :--- |

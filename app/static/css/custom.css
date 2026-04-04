@@ -1,0 +1,409 @@
+/* --- VARIABLES GLOBALES --- */
+:root {
+    --primary-gradient: linear-gradient(135deg, #23a6d5 0%, #23d5ab 100%);
+    --danger-gradient: linear-gradient(135deg, #ff5252 0%, #f44336 100%);
+    --sidebar-dark: #2c3e50;      /* Color profesional del menú lateral */
+    --bg-main: #f4f7f6;           /* Fondo grisáceo claro para resaltar tarjetas */
+    --white: #ffffff;
+    --text-main: #34495e;
+    --text-muted: #7f8c8d;
+    --accent: #23a6d5;
+    --sidebar-width: 280px;
+}
+
+/* --- ESTRUCTURA BASE --- */
+body {
+    background-color: var(--bg-main);
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    overflow-x: hidden;
+}
+
+/* --- SIDEBAR PROFESIONAL --- */
+.sidebar {
+    width: var(--sidebar-width);
+    height: 100vh;
+    background-color: var(--sidebar-dark);
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+}
+
+.sidebar-header {
+    padding: 30px 25px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.logo-wrapper {
+    background: var(--white);
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+}
+
+.brand-name {
+    color: var(--white);
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+/* --- NAVEGACIÓN --- */
+.sidebar-nav {
+    padding: 20px 0;
+    flex-grow: 1;
+}
+
+.nav-section {
+    padding: 0 15px 25px 15px;
+}
+
+.nav-label {
+    color: rgba(255,255,255,0.3);
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    padding-left: 10px;
+    display: block;
+}
+
+.nav-item {
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    padding: 12px 15px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+    margin-bottom: 5px;
+}
+
+.nav-item i, .nav-item span.material-icons-round {
+    margin-right: 12px;
+    font-size: 20px;
+}
+
+.nav-item:hover {
+    background: rgba(255,255,255,0.05);
+    color: var(--white);
+}
+
+.nav-item.active {
+    background: var(--primary-gradient);
+    color: var(--white);
+    box-shadow: 0 4px 15px rgba(35, 166, 213, 0.3);
+}
+
+/* --- CONTENIDO PRINCIPAL --- */
+.main-content {
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    width: calc(100% - var(--sidebar-width));
+}
+
+.top-bar {
+    height: 70px;
+    background: var(--white);
+    display: flex;
+    align-items: center;
+    padding: 0 30px;
+    border-bottom: 1px solid #eef2f6;
+}
+
+.content-body {
+    padding: 40px;
+    flex-grow: 1;
+}
+
+/* --- TARJETAS (STAT CARDS) --- */
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.icon-shape {
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bg-primary-gradient { background: var(--primary-gradient); }
+.bg-danger-gradient { background: var(--danger-gradient); }
+
+/* --- TABLAS MODERNAS --- */
+.table {
+    background: var(--white);
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+/* --- ESTRUCTURA DASHBOARD --- */
+body:not(.login-page) .main-content {
+    margin-left: var(--sidebar-width);
+    background-color: var(--bg-main);
+    min-height: 100vh;
+}
+
+.table thead th {
+    background-color: #f8f9fa;
+    border: none;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    padding: 15px;
+}
+
+.table tbody td {
+    padding: 15px;
+    border-bottom: 1px solid #f1f4f8;
+    vertical-align: middle;
+}
+
+/* --- FIX CENTRADO TOTAL LOGIN --- */
+
+/* Forzamos que el body de la página de login ocupe todo y no tenga márgenes */
+body.login-page {
+    background-color: var(--sidebar-dark) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 100vh !important;
+    width: 100vw !important;
+    margin: 0 !important;
+    overflow: hidden;
+}
+
+/* Eliminamos el margen de 280px que tiene el contenido principal */
+body.login-page .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+}
+
+/* Aseguramos que el contenedor interno no tenga rellenos que lo desvíen */
+body.login-page .content-body {
+    padding: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100%;
+}
+
+/* La tarjeta del login */
+.login-card {
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    background: white;
+}
+
+.main-content {
+    margin-left: var(--sidebar-width); /* Espacio para el dashboard */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+}
+
+/* --- SOLUCIÓN DE CENTRADO PARA LOGIN --- */
+body.login-page {
+    background-color: var(--sidebar-dark) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 100vh !important;
+    width: 100vw !important;
+}
+
+/* IMPORTANTE: Anulamos el margen del main-content solo en login */
+body.login-page .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+}
+
+body.login-page .content-body {
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-card {
+    background: white;
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-icon {
+    background: rgba(35, 166, 213, 0.1);
+    color: #23a6d5;
+    width: 70px;
+    height: 70px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+/* Contenedor del Buscador Creativo */
+.search-wrapper {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 8px 15px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.search-container:focus-within {
+    background: #fff;
+    border-color: #0d6efd;
+    box-shadow: 0 8px 20px rgba(13, 110, 253, 0.12);
+    transform: translateY(-2px);
+}
+
+.creative-search {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    height: 40px;
+    font-weight: 500;
+    width: 100%;
+    padding-left: 10px;
+}
+
+.search-icon-anim {
+    color: #adb5bd;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.search-container:focus-within .search-icon-anim {
+    color: #0d6efd;
+    transform: rotate(15deg) scale(1.2);
+}
+
+/* Animación de filas al filtrar */
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.row-fade-in {
+    animation: slideIn 0.3s ease forwards;
+}
+
+/* Diseño del contenedor del Modal */
+.modal-content {
+    border-radius: 15px;
+    border: none;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+/* Cabecera Azul vibrante */
+.modal-header-custom {
+    background-color: #0061ff;
+    color: white;
+    padding: 1.5rem;
+    border-bottom: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header-custom .modal-title {
+    font-weight: 600;
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+/* Botón X de cerrar en blanco */
+.modal-header-custom .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.8;
+}
+
+/* Cuerpo y Formulario */
+.modal-body {
+    padding: 2rem;
+}
+
+.form-label {
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.form-control {
+    border-radius: 8px;
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+    transition: border-color 0.2s;
+}
+
+.form-control:focus {
+    border-color: #0061ff;
+    box-shadow: none;
+}
+
+/* Botón de acción principal */
+.btn-guardar {
+    background-color: #0061ff;
+    color: white;
+    border: none;
+    padding: 0.8rem;
+    border-radius: 8px;
+    font-weight: 600;
+    width: 100%;
+    margin-top: 1rem;
+    transition: all 0.3s ease;
+}
+
+.btn-guardar:hover {
+    background-color: #0056e0;
+    transform: translateY(-1px);
+    color: white;
+}

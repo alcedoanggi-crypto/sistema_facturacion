@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-white p-4 rounded shadow">
+    <h1>{% if invoice %}Editar{% else %}Nueva{% endif %} Factura</h1>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <div class="mb-4">
+            {{ form.customer_id.label(class="form-label") }}
+            {{ form.customer_id(class="form-select") }}
+        </div>
+
+        <hr>
+        <h3>Productos</h3>
+
+        <div class="mb-3">
+            <div class="input-group">
+                <span class="input-group-text bg-dark text-white"><i class="bi bi-search"></i> Buscar</span>
+                <input type="text" id="productSearch" class="form-control" placeholder="Escribe el nombre del producto para filtrar...">
+            </div>
+        </div>
+
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <table class="table table-bordered">
+                <thead class="table-dark"> <tr>
+                        <th>Producto</th>
+                        <th>Precio Unitario</th>
+                        <th>Cantidad</th>
+                    </tr>
+                </thead>
+<tbody>
+    {% for product in products %}
+    <tr class="product-row">
+        <td>
+            <div class="form-check">
+                <input class="form-check-input product-check" type="checkbox"
+                       name="product_{{ product.id }}" value="{{ product.id }}" id="prod_{{ product.id }}">
+                <label class="form-check-label product-name" for="prod_{{ product.id }}">
+                    {{ product.name }}
+                </label>
+            </div>
+        </td>
+        <td>${{ "{:,.2f}".format(product.price) }}</td>
+        <td>
+            <input type="number" name="quantity_{{ product.id }}"
+                   class="form-control quantity-input" min="1" value="0" style="width: 100px;" disabled>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+            </table>
+        </div>
+
+        <div class="mt-4">
+            {{ form.submit(class="btn btn-success") }}
+            <a href="{{ url_for('main.invoices') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+{% endblock %}

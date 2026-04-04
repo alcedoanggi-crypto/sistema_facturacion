@@ -1,0 +1,36 @@
+<!-- app/templates/invoice_detail.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-white p-4 rounded shadow">
+    <h1>Factura #{{ invoice.id }}</h1>
+    <p><strong>Cliente:</strong> {{ invoice.customer.name }} ({{ invoice.customer.email }})</p>
+    <p><strong>Fecha:</strong> {{ invoice.date_created.strftime('%Y-%m-%d %H:%M') }}</p>
+    <h3>Items</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+<tbody>
+            {% for item in invoice.items %}
+            <tr>
+                <td>{{ item.product.name if item.product else "Producto no encontrado" }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>${{ "%.2f"|format(item.price) }}</td>
+                <td>${{ "%.2f"|format(item.quantity * item.price) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <p><strong>Subtotal:</strong> ${{ "%.2f"|format(invoice.total / 1.19) }}</p>
+    <p><strong>Impuestos (19%):</strong> ${{ "%.2f"|format(invoice.tax) }}</p>
+    <p><strong>Total:</strong> ${{ "%.2f"|format(invoice.total) }}</p>
+    <a href="{{ url_for('main.invoices') }}" class="btn btn-secondary">Volver</a>
+    <button class="btn btn-primary" onclick="window.print()">Imprimir</button>
+</div>
+{% endblock %}

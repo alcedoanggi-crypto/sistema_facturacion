@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold">Gestión de Reportes</h2>
+            <p class="text-muted">Visualice y descargue la información clave de su negocio en formato PDF.</p>
+        </div>
+        <div class="bg-light p-3 rounded shadow-sm border text-end">
+            <span class="text-muted small d-block">Ventas Totales</span>
+            <h4 class="fw-bold text-primary mb-0">${{ "{:,.2f}".format(monto_total) }}</h4>
+        </div>
+    </div>
+    <hr>
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <a href="{{ url_for('main.export_customers_pdf') }}" class="text-decoration-none" target="_blank">
+                <div class="card text-white bg-primary shadow-sm h-100 card-report">
+                    <div class="card-body py-4 text-center">
+                        <i class="bi bi-people fs-1"></i>
+                        <h5 class="card-title mt-2">Clientes Registrados</h5>
+                        <p class="display-5 fw-bold">{{ total_clientes }}</p>
+                        <small class="opacity-75">Ver Informe Completo</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <a href="{{ url_for('main.export_products_pdf') }}" class="text-decoration-none" target="_blank">
+                <div class="card text-white bg-success shadow-sm h-100 card-report">
+                    <div class="card-body py-4 text-center">
+                        <i class="bi bi-box-seam fs-1"></i>
+                        <h5 class="card-title mt-2">Productos en Stock</h5>
+                        <p class="display-5 fw-bold">{{ total_productos }}</p>
+                        <small class="opacity-75">Ver Inventario PDF</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <a href="{{ url_for('main.export_invoices_pdf') }}" class="text-decoration-none" target="_blank">
+                <div class="card text-white bg-info shadow-sm h-100 card-report">
+                    <div class="card-body py-4 text-center">
+                        <i class="bi bi-receipt fs-1 text-dark"></i>
+                        <h5 class="card-title mt-2 text-dark">Facturas Emitidas</h5>
+                        <p class="display-5 fw-bold text-dark">{{ total_facturas }}</p>
+                        <small class="text-dark opacity-75">Ver Histórico de Ventas</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card-report {
+        transition: all 0.3s ease;
+        border: none;
+    }
+    .card-report:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2) !important;
+    }
+    .bg-info {
+        background-color: #0dcaf0 !important;
+    }
+</style>
+{% endblock %}

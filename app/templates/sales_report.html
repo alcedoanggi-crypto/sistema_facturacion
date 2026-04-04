@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+
+<div class="bg-white p-4 rounded shadow">
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <div>
+            <h1 class="mb-0 fw-bold">Reporte de Ventas</h1>
+            <p class="text-muted small mb-0">Gestión y auditoría de ingresos por facturación</p>
+        </div>
+        <div class="gap-2 d-flex">
+            <a href="{{ url_for('main.reports') }}" class="btn btn-outline-dark">
+                <i class="bi bi-arrow-left"></i> Volver a Panel
+            </a>
+            <button class="btn btn-dark" onclick="window.print()">
+                <i class="bi bi-printer"></i> Imprimir lo Filtrado
+            </button>
+        </div>
+    </div>
+
+    <div class="d-none d-print-block text-center mb-4">
+        <h2 class="fw-bold">REPORTE DE VENTAS DETALLADO</h2>
+        <p>Fecha de generación: {{ invoices[0].date_created.strftime('%d/%m/%Y') if invoices else '' }}</p>
+        <hr>
+    </div>
+
+<div class="row mb-4 no-print">
+    <div class="col-md-6">
+        <div class="input-group shadow-sm">
+             <span class="input-group-text bg-dark text-white"><i class="bi bi-search"></i> Buscar</span>
+            </span>
+            <input type="text" id="reportSearch" class="form-control border-dark" placeholder="Buscar por cliente, ID o fecha...">
+        </div>
+        <small class="text-muted d-block mt-2 italic">
+            <i class="bi bi-info-circle"></i> La impresión solo mostrará los resultados filtrados.
+        </small>
+    </div>
+</div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center border-dark shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase small fw-bold">Total Facturas</h6>
+                    <p class="h3 fw-bold mb-0">{{ total_invoices }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center border-dark shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase small fw-bold">Ingresos Totales</h6>
+                    <p class="h3 fw-bold text-success mb-0">${{ "%.2f"|format(total_revenue) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center border-dark shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase small fw-bold">Impuestos (18%)</h6>
+                    <p class="h3 fw-bold text-danger mb-0">${{ "%.2f"|format(total_tax) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered align-middle" id="salesTable">
+            <thead class="table-dark">
+                <tr>
+                    <th style="width: 15%">ID Factura</th>
+                    <th style="width: 40%">Cliente</th>
+                    <th style="width: 25%">Fecha</th>
+                    <th style="width: 20%" class="text-end">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for invoice in invoices %}
+                <tr>
+                    <td class="fw-bold">#{{ invoice.id }}</td>
+                    <td>{{ invoice.customer.name }}</td>
+                    <td>{{ invoice.date_created.strftime('%d/%m/%Y') }}</td>
+                    <td class="text-end fw-bold text-dark">${{ "%.2f"|format(invoice.total) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}

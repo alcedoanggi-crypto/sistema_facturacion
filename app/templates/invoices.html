@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    {# Mensajes Flash #}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="header-action mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="text-main fw-bold">Gestión de Facturas</h2>
+            <p class="text-muted">Registro y control de ventas realizadas</p>
+        </div>
+        <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addInvoiceModal">
+            <i class="bi bi-plus-lg"></i> Nueva Factura
+        </button>
+    </div>
+
+    {# TABLA PRINCIPAL #}
+   <!-- Tabla de Facturas Actualizada -->
+<!-- Tabla de Facturas con ID en estilo normal -->
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th class="ps-4">ID</th>
+                    <th>CLIENTE</th>
+                    <th>FECHA</th>
+                    <th>TOTAL</th>
+                    <th class="text-center pe-4">ACCIONES</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inv in invoices %}
+                <tr>
+                    <!-- CAMBIO: Se eliminó 'fw-bold' para quitar la negrita -->
+                    <td class="ps-4 text-dark" style="font-style: normal;">{{ loop.index }}</td>
+
+                    <td><span class="fw-bold">{{ inv.customer.name }}</span></td>
+                    <td class="text-muted">{{ inv.date_created.strftime('%d/%m/%Y') }}</td>
+                    <td><span class="fw-bold text-success">${{ "{:,.2f}".format(inv.total) }}</span></td>
+                    <td class="text-center">
+                        <div class="btn-group shadow-sm">
+                            <a href="{{ url_for('main.print_invoice', id=inv.id) }}" target="_blank" class="btn btn-sm btn-secondary">
+                                <i class="bi bi-printer-fill"></i>
+                            </a>
+                            <button class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#viewModal{{ inv.id }}">
+                                <i class="bi bi-eye-fill"></i>
+                            </button>
+                            <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editModal{{ inv.id }}">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <form action="{{ url_for('main.delete_invoice', id=inv.id) }}" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar factura?')">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# MODAL: REGISTRAR NUEVA FACTURA #}
+<div class="modal fade" id="addInvoiceModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">Registrar Nueva Factura</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('main.add_invoice') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">Seleccionar Cliente</label>
+                        <select name="customer_id" class="form-select" required>
+                            <option value="" disabled selected>Elija un cliente...</option>
+                            {% for c in customers %}
+                            <option value="{{ c.id }}">{{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="search-wrapper">
+                        <div class="search-container">
+                            <i class="bi bi-search search-icon-anim"></i>
+                            <input type="text" class="creative-search product-search"
+                                   data-target="addTable"
+                                   placeholder="Buscar producto por nombre...">
+                        </div>
+                    </div>
+
+                    <div class="table-responsive border rounded" style="max-height: 300px;">
+                        <table class="table table-sm table-hover align-middle mb-0" id="addTable">
+                            <thead class="bg-light sticky-top">
+                                <tr>
+                                    <th width="50"></th>
+                                    <th>PRODUCTO</th>
+                                    <th>PRECIO</th>
+                                    <th width="100">CANTIDAD</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in products %}
+                                <tr>
+                                    <td><input type="checkbox" name="product_{{ p.id }}" value="{{ p.id }}" class="product-check form-check-input"></td>
+                                    <td class="small fw-bold product-name">{{ p.name }}</td>
+                                    <td class="small text-muted">${{ "{:,.2f}".format(p.price) }}</td>
+                                    <td><input type="number" name="quantity_{{ p.id }}" class="form-control form-control-sm qty-input" value="1" min="1" disabled></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="submit" class="btn btn-primary w-100 fw-bold py-2">Guardar Factura</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{# MODALES DINÁMICOS #}
+{% for inv in invoices %}
+    {# MODAL: VER DETALLE #}
+    <div class="modal fade" id="viewModal{{ inv.id }}" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title fw-bold">Detalle de Factura #{{ inv.id }}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="p-3 bg-light border-bottom">
+                        <p class="mb-1"><strong>Cliente:</strong> {{ inv.customer.name }}</p>
+                        <p class="mb-0 small text-muted"><strong>Fecha:</strong> {{ inv.date_created.strftime('%d/%m/%Y') }}</p>
+                    </div>
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr class="small text-muted">
+                                <th class="ps-3">Producto</th>
+                                <th class="text-center">Cant.</th>
+                                <th class="text-end pe-3">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in inv.items %}
+                            <tr>
+                                <td class="ps-3 small">{{ item.product.name }}</td>
+                                <td class="text-center small">{{ item.quantity }}</td>
+                                <td class="text-end pe-3 small">${{ "{:,.2f}".format(item.price * item.quantity) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="p-3 text-end border-top">
+                        <h5 class="mb-0 fw-bold text-success">Total: ${{ "{:,.2f}".format(inv.total) }}</h5>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <a href="{{ url_for('main.print_invoice', id=inv.id) }}" target="_blank" class="btn btn-secondary w-100 fw-bold">
+                        <i class="bi bi-printer"></i> Imprimir Ticket
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# MODAL: EDITAR #}
+    <div class="modal fade" id="editModal{{ inv.id }}" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title fw-bold">Editar Factura #{{ inv.id }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ url_for('main.edit_invoice', id=inv.id) }}" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Cliente</label>
+                            <select name="customer_id" class="form-select">
+                                {% for c in customers %}
+                                <option value="{{ c.id }}" {% if c.id == inv.customer_id %}selected{% endif %}>{{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="search-wrapper">
+                            <div class="search-container">
+                                <i class="bi bi-search search-icon-anim"></i>
+                                <input type="text" class="creative-search product-search"
+                                       data-target="editTable{{ inv.id }}"
+                                       placeholder="Filtrar productos...">
+                            </div>
+                        </div>
+
+                        <div class="table-responsive border rounded" style="max-height: 250px;">
+                            <table class="table table-sm table-hover" id="editTable{{ inv.id }}">
+                                <thead>
+                                    <tr>
+                                        <th width="50"></th>
+                                        <th>Producto</th>
+                                        <th width="100">Cantidad</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in products %}
+                                    {% set item_existente = inv.items|selectattr("product_id", "equalto", p.id)|first %}
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox" name="product_{{ p.id }}" value="{{ p.id }}"
+                                                   class="product-check form-check-input"
+                                                   {% if item_existente %}checked{% endif %}>
+                                        </td>
+                                        <td class="small fw-bold product-name">{{ p.name }}</td>
+                                        <td>
+                                            <input type="number" name="quantity_{{ p.id }}"
+                                                   class="form-control form-control-sm qty-input"
+                                                   value="{{ item_existente.quantity if item_existente else 1 }}"
+                                                   min="1" {% if not item_existente %}disabled{% endif %}>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="submit" class="btn btn-warning w-100 fw-bold">Actualizar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endfor %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // 1. Lógica para habilitar cantidades
+    function setupCheckboxLogic() {
+        document.querySelectorAll('.product-check').forEach(check => {
+            check.addEventListener('change', function() {
+                const row = this.closest('tr');
+                const qtyInput = row.querySelector('.qty-input');
+                qtyInput.disabled = !this.checked;
+                if (this.checked) {
+                    qtyInput.focus();
+                    row.style.backgroundColor = "rgba(13, 110, 253, 0.05)";
+                } else {
+                    row.style.backgroundColor = "";
+                }
+            });
+        });
+    }
+
+    // 2. Lógica del Buscador Creativo
+    function setupSearchLogic() {
+        const searches = document.querySelectorAll('.product-search');
+        searches.forEach(input => {
+            input.addEventListener('input', function() {
+                const term = this.value.toLowerCase().trim();
+                const targetId = this.getAttribute('data-target');
+                const rows = document.querySelectorAll(`#${targetId} tbody tr`);
+
+                rows.forEach(row => {
+                    const name = row.querySelector('.product-name').textContent.toLowerCase();
+                    if (name.includes(term)) {
+                        row.style.display = "";
+                        row.classList.add('row-fade-in');
+                    } else {
+                        row.style.display = "none";
+                        row.classList.remove('row-fade-in');
+                    }
+                });
+            });
+        });
+    }
+
+    setupCheckboxLogic();
+    setupSearchLogic();
+});
+</script>
+{% endblock %}

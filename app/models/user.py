@@ -13,4 +13,12 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password_ingresada):
         # Comparación directa de texto plano como tienes en tu BD
+        # Usuarios creados desde Configuración tienen la contraseña encriptada
+        if self.password.startswith(('scrypt:', 'pbkdf2:')):
+            return check_password_hash(self.password, password_ingresada)
         return self.password == password_ingresada
+
+    def set_password(self, password):
+        # Guardamos la contraseña encriptada (nunca en texto plano)
+        # pbkdf2 cabe en la columna de 150 caracteres (scrypt ocupa más)
+        self.password = generate_password_hash(password, method='pbkdf2:sha256')

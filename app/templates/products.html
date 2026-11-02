@@ -2,29 +2,19 @@
 
 {% block content %}
 <div class="container-fluid">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-
-    <div class="header-action mb-3 d-flex justify-content-between align-items-center">
+    <div class="page-header mb-4 d-flex flex-wrap gap-3 justify-content-between align-items-center">
         <div>
-            <h2 class="text-main fw-bold mb-0">Inventario de Productos</h2>
-            <p class="text-muted mb-0">Gestión de existencias y precios</p>
+            <h2 class="page-title mb-1">Inventario de Productos</h2>
+            <p class="text-muted mb-0">Gestión de existencias, precios y fotos</p>
         </div>
 
         <div class="d-flex gap-2">
-            <form action="{{ url_for('main.import_products') }}" method="POST" enctype="multipart/form-data" class="d-flex align-items-center border rounded p-1 bg-white shadow-sm">
-                <input type="file" name="file" class="form-control form-control-sm border-0" accept=".xlsx, .xls" required style="width: 180px;">
-                <button type="submit" class="btn btn-sm btn-success text-white px-3">
-                    <i class="bi bi-file-earmark-excel"></i> Importar
-                </button>
+            <!-- Importar Excel: el input está oculto y se envía al elegir el archivo -->
+            <form action="{{ url_for('main.import_products') }}" method="POST" enctype="multipart/form-data" id="importForm">
+                <label class="btn btn-soft-success shadow-sm mb-0">
+                    <i class="bi bi-file-earmark-excel"></i> Importar Excel
+                    <input type="file" name="file" accept=".xlsx, .xls" hidden onchange="this.form.submit()">
+                </label>
             </form>
 
             <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalProducto">
@@ -33,78 +23,125 @@
         </div>
     </div>
 
-    <div class="mb-4" style="max-width: 300px;">
-        <div class="input-group shadow-sm border rounded">
-            <span class="input-group-text bg-white border-0">
-                <i class="bi bi-search text-muted"></i>
-            </span>
-            <input type="text" id="searchInput" class="form-control border-0 ps-0" placeholder="Buscar por nombre o código...">
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="mini-stat stat-violet">
+                <i class="bi bi-box-seam"></i>
+                <div><div class="mini-stat-value">{{ products|length }}</div><div class="mini-stat-label">Productos</div></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="mini-stat stat-teal">
+                <i class="bi bi-stack"></i>
+                <div><div class="mini-stat-value">{{ products|sum(attribute='stock') }}</div><div class="mini-stat-label">Unidades en stock</div></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="mini-stat stat-coral">
+                <i class="bi bi-exclamation-triangle"></i>
+                <div><div class="mini-stat-value">{{ products|selectattr('stock', 'le', 10)|list|length }}</div><div class="mini-stat-label">Con stock bajo (≤ 10)</div></div>
+            </div>
         </div>
     </div>
 
-   <!-- Tabla de Productos Actualizada -->
-<div class="card border-0 shadow-sm">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" id="productsTable">
-            <thead class="table-dark">
-                <tr>
-                    <th class="ps-4">ID</th>
-                    <th>CÓDIGO</th>
-                    <th>PRODUCTO</th>
-                    <th>DESCRIPCIÓN</th>
-                    <th>PRECIO</th>
-                    <th>STOCK</th>
-                    <th class="text-center pe-4">ACCIONES</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in products %}
-                <tr>
-                    <!-- CAMBIO: Se eliminó '#' y se usa loop.index para numeración consecutiva -->
-                    <td class="ps-4 text-muted small">{{ loop.index }}</td>
+    <div class="search-container mb-4" style="max-width: 360px;">
+        <i class="bi bi-search search-icon-anim"></i>
+        <input type="text" id="searchInput" class="creative-search" placeholder="Buscar por nombre o código...">
+    </div>
 
-                    <td class="barcode-cell">
-                        <span class="badge bg-light text-dark border">
-                            <i class="bi bi-upc-scan"></i> {{ p.barcode or 'S/N' }}
-                        </span>
-                    </td>
-                    <td class="name-cell"><span class="fw-bold">{{ p.name }}</span></td>
-                    <td><span class="text-muted small">{{ p.description or 'Sin descripción' }}</span></td>
-                    <td><span class="fw-bold text-dark">${{ "{:,.2f}".format(p.price) }}</span></td>
-                    <td>
-                        {% if p.stock <= 5 %}
-                            <span class="badge bg-danger-soft text-danger">{{ p.stock }} unidades</span>
-                        {% else %}
-                            <span class="badge bg-success-soft text-success">{{ p.stock }} unidades</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-center pe-4">
-                        <div class="btn-group shadow-sm">
-                            <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editProductModal{{ p.id }}">
-                                <i class="bi bi-pencil-square"></i>
-                            </button>
-                            <form action="{{ url_for('main.delete_product', id=p.id) }}" method="POST" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar producto?')">
-                                    <i class="bi bi-trash-fill"></i>
+    <div class="card table-card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="productsTable">
+                <thead>
+                    <tr>
+                        <th class="ps-4">#</th>
+                        <th>FOTO</th>
+                        <th>CÓDIGO</th>
+                        <th>PRODUCTO</th>
+                        <th>DESCRIPCIÓN</th>
+                        <th>PRECIO</th>
+                        <th>STOCK</th>
+                        <th class="text-center pe-4">ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in products %}
+                    <tr>
+                        <td class="ps-4 text-muted small">{{ loop.index }}</td>
+                        <td>
+                            {% if p.image %}
+                                <img src="{{ url_for('static', filename=p.image) }}" alt="{{ p.name }}" class="product-thumb">
+                            {% else %}
+                                <div class="product-thumb product-thumb-empty thumb-color-{{ p.id % 6 }}" title="Sin foto">
+                                    {{ p.name[:1]|upper }}
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td class="barcode-cell">
+                            <span class="barcode-badge"><i class="bi bi-upc-scan"></i> {{ p.barcode or 'S/N' }}</span>
+                        </td>
+                        <td class="name-cell"><span class="fw-bold">{{ p.name }}</span></td>
+                        <td><span class="text-muted small">{{ p.description or 'Sin descripción' }}</span></td>
+                        <td><span class="price-tag">${{ "{:,.2f}".format(p.price) }}</span></td>
+                        <td>
+                            {% if p.stock <= 10 %}
+                                <span class="stock-pill stock-low"><i class="bi bi-arrow-down-circle"></i> {{ p.stock }} unidades</span>
+                            {% else %}
+                                <span class="stock-pill stock-ok"><i class="bi bi-check-circle"></i> {{ p.stock }} unidades</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center pe-4">
+                            <div class="d-inline-flex gap-1">
+                                <button class="btn btn-icon btn-icon-edit" title="Editar" data-bs-toggle="modal" data-bs-target="#editProductModal{{ p.id }}">
+                                    <i class="bi bi-pencil-square"></i>
                                 </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                                <form action="{{ url_for('main.delete_product', id=p.id) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-icon btn-icon-delete" title="Eliminar" onclick="return confirm('¿Eliminar producto?')">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
+{% macro campo_foto(id_input, imagen=None) %}
+<div class="mb-3">
+    <label class="form-label">Foto del Producto</label>
+    <label class="photo-drop" for="{{ id_input }}">
+        <img id="{{ id_input }}_preview" class="photo-preview {{ '' if imagen else 'd-none' }}"
+             src="{{ url_for('static', filename=imagen) if imagen else '' }}" alt="Vista previa">
+        <div id="{{ id_input }}_placeholder" class="photo-placeholder {{ 'd-none' if imagen else '' }}">
+            <i class="bi bi-camera"></i>
+            <span>Haz clic para subir una foto</span>
+            <small>PNG, JPG o WEBP · máx. 5 MB</small>
+        </div>
+    </label>
+    <input type="file" name="image" id="{{ id_input }}" accept="image/png, image/jpeg, image/webp, image/gif"
+           class="d-none" onchange="previewFoto(this)">
+    {% if imagen %}
+    <div class="form-check mt-2">
+        <input class="form-check-input" type="checkbox" name="remove_image" value="1" id="{{ id_input }}_remove">
+        <label class="form-check-label small text-muted" for="{{ id_input }}_remove">Quitar la foto actual</label>
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
 <div class="modal fade" id="modalProducto" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <form action="{{ url_for('main.add_product') }}" method="POST" class="modal-content">
+        <form action="{{ url_for('main.add_product') }}" method="POST" enctype="multipart/form-data" class="modal-content">
             <div class="modal-header-custom">
-                <h5 class="modal-title">Nuevo Producto</h5>
+                <h5 class="modal-title"><i class="bi bi-box-seam me-2"></i>Nuevo Producto</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                {{ campo_foto('image_new') }}
                 <div class="mb-3">
                     <label class="form-label">Nombre del Producto</label>
                     <input type="text" name="name" class="form-control" placeholder="Ej: Jabón Líquido" required>
@@ -136,19 +173,20 @@
 {% for p in products %}
 <div class="modal fade" id="editProductModal{{ p.id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <form action="{{ url_for('main.edit_product', id=p.id) }}" method="POST" class="modal-content">
+        <form action="{{ url_for('main.edit_product', id=p.id) }}" method="POST" enctype="multipart/form-data" class="modal-content">
             <div class="modal-header-custom">
-                <h5 class="modal-title">Editar Producto</h5>
+                <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar Producto</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                {{ campo_foto('image_' ~ p.id, p.image) }}
                 <div class="mb-3">
                     <label class="form-label">Nombre del Producto</label>
                     <input type="text" name="name" class="form-control" value="{{ p.name }}" required>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Código de Barras</label>
-                    <input type="text" name="barcode" class="form-control" value="{{ p.barcode }}">
+                    <input type="text" name="barcode" class="form-control" value="{{ p.barcode or '' }}">
                 </div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
@@ -162,7 +200,7 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Descripción</label>
-                    <input type="text" name="description" class="form-control" value="{{ p.description }}">
+                    <input type="text" name="description" class="form-control" value="{{ p.description or '' }}">
                 </div>
                 <button type="submit" class="btn btn-guardar shadow">Actualizar Producto</button>
             </div>
@@ -182,5 +220,20 @@ document.getElementById('searchInput').addEventListener('keyup', function() {
         row.style.display = (name.includes(filter) || barcode.includes(filter)) ? '' : 'none';
     });
 });
+
+// Muestra la foto elegida antes de guardar
+function previewFoto(input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+        input.value = '';
+        input.closest('.mb-3').querySelector('.photo-placeholder small').textContent = 'La foto supera 5 MB, elige otra';
+        return;
+    }
+    const preview = document.getElementById(input.id + '_preview');
+    preview.src = URL.createObjectURL(file);
+    preview.classList.remove('d-none');
+    document.getElementById(input.id + '_placeholder').classList.add('d-none');
+}
 </script>
 {% endblock %}

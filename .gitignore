@@ -1,3 +1,7 @@
 venv/
 __pycache__/
 .env
+instance/
+run_sqlite.py
+seed_demo.py
+app/static/uploads/

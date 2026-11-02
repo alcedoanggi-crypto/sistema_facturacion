@@ -13,3 +13,6 @@ class Product(db.Model):
 
     # AÑADE ESTA LÍNEA AQUÍ:
     barcode = db.Column(db.String(50), unique=True, nullable=True)
+
+    # Ruta relativa a /static de la foto del producto (ej: uploads/products/abc.jpg)
+    image = db.Column(db.String(255), nullable=True)

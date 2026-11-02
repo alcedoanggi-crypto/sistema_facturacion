@@ -14,8 +14,36 @@ from fpdf import FPDF
 from sqlalchemy import func
 from datetime import datetime, timedelta
 from collections import OrderedDict
+import os
+import uuid
+from flask import current_app
 
 main = Blueprint('main', __name__)
+
+# --- FOTOS DE PRODUCTOS ---
+EXTENSIONES_IMAGEN = {'png', 'jpg', 'jpeg', 'webp', 'gif'}
+CARPETA_FOTOS = 'uploads/products'  # relativa a app/static
+
+
+def guardar_foto_producto(archivo):
+    """Guarda la foto subida y devuelve su ruta relativa a /static, o None si no es válida."""
+    if not archivo or not archivo.filename or '.' not in archivo.filename:
+        return None
+    extension = archivo.filename.rsplit('.', 1)[1].lower()
+    if extension not in EXTENSIONES_IMAGEN:
+        return None
+    carpeta = os.path.join(current_app.static_folder, CARPETA_FOTOS)
+    os.makedirs(carpeta, exist_ok=True)
+    nombre = f"{uuid.uuid4().hex}.{extension}"
+    archivo.save(os.path.join(carpeta, nombre))
+    return f"{CARPETA_FOTOS}/{nombre}"
+
+
+def borrar_foto_producto(ruta):
+    if ruta:
+        archivo = os.path.join(current_app.static_folder, ruta)
+        if os.path.isfile(archivo):
+            os.remove(archivo)
 
 
 # --- FORMULARIOS ---
@@ -73,7 +101,7 @@ def dashboard():
                            total_ventas=total_ventas,
                            count_clientes=count_clientes,
                            count_productos=count_productos,
-                           ultimas_facturas=Invoice.query.join(Customer).order_by(Customer.name.asc()).limit(5).all(),
+                           ultimas_facturas=Invoice.query.order_by(Invoice.date_created.desc()).limit(5).all(),
                            labels_ventas=labels_ventas,
                            data_ventas=data_ventas)
 
@@ -114,10 +142,15 @@ def add_customer():
     address = request.form.get('address')
 
     if name and email:
+        if Customer.query.filter_by(email=email).first():
+            flash(f'Ya existe un cliente con el email {email}', 'danger')
+            return redirect(url_for('main.customers'))
         new_c = Customer(name=name, email=email, phone=phone, address=address)
         db.session.add(new_c)
         db.session.commit()
         flash('Cliente agregado con éxito', 'success')
+    else:
+        flash('Nombre y email son obligatorios', 'danger')
     return redirect(url_for('main.customers'))
 
 
@@ -125,8 +158,12 @@ def add_customer():
 @login_required
 def edit_customer(id):
     customer = Customer.query.get_or_404(id)
+    email = request.form.get('email')
+    if Customer.query.filter(Customer.email == email, Customer.id != id).first():
+        flash(f'Ya existe otro cliente con el email {email}', 'danger')
+        return redirect(url_for('main.customers'))
     customer.name = request.form.get('name')
-    customer.email = request.form.get('email')
+    customer.email = email
     customer.phone = request.form.get('phone')
     customer.address = request.form.get('address')
     db.session.commit()
@@ -138,6 +175,9 @@ def edit_customer(id):
 @login_required
 def delete_customer(id):
     customer = Customer.query.get_or_404(id)
+    if customer.customer_invoices:
+        flash(f'No se puede eliminar a {customer.name}: tiene {len(customer.customer_invoices)} factura(s) registradas', 'danger')
+        return redirect(url_for('main.customers'))
     db.session.delete(customer)
     db.session.commit()
     flash('Cliente eliminado', 'warning')
@@ -156,14 +196,18 @@ def products():
 @login_required
 def add_product():
     # Capturamos el nuevo campo 'barcode' del formulario
-    barcode_val = request.form.get('barcode')
+    barcode_val = (request.form.get('barcode') or '').strip() or None  # vacío = sin código
+    if barcode_val and Product.query.filter_by(barcode=barcode_val).first():
+        flash(f'Ya existe un producto con el código {barcode_val}', 'danger')
+        return redirect(url_for('main.products'))
 
     new_p = Product(
         name=request.form.get('name'),
         barcode=barcode_val,  # <-- Agregado
         description=request.form.get('description'),
         price=float(request.form.get('price') or 0),
-        stock=int(request.form.get('stock') or 0)
+        stock=int(request.form.get('stock') or 0),
+        image=guardar_foto_producto(request.files.get('image'))
     )
     db.session.add(new_p)
     db.session.commit()
@@ -178,10 +222,20 @@ def edit_product(id):
 
     # Actualizamos los campos, incluyendo el código de barras
     product.name = request.form.get('name')
-    product.barcode = request.form.get('barcode')  # <-- Agregado
+    barcode_val = (request.form.get('barcode') or '').strip() or None  # vacío = sin código
+    if barcode_val and Product.query.filter(Product.barcode == barcode_val, Product.id != id).first():
+        flash(f'Ya existe otro producto con el código {barcode_val}', 'danger')
+        return redirect(url_for('main.products'))
+    product.barcode = barcode_val
     product.description = request.form.get('description')
     product.price = float(request.form.get('price') or 0)
     product.stock = int(request.form.get('stock') or 0)
+
+    # Si suben una foto nueva reemplaza a la anterior; si marcan "quitar foto" se elimina
+    nueva_foto = guardar_foto_producto(request.files.get('image'))
+    if nueva_foto or request.form.get('remove_image'):
+        borrar_foto_producto(product.image)
+        product.image = nueva_foto
 
     db.session.commit()
     flash('Producto actualizado correctamente', 'success')
@@ -191,8 +245,13 @@ def edit_product(id):
 @login_required
 def delete_product(id):
     product = Product.query.get_or_404(id)
+    if InvoiceItem.query.filter_by(product_id=id).first():
+        flash(f'No se puede eliminar {product.name}: aparece en facturas registradas', 'danger')
+        return redirect(url_for('main.products'))
+    foto = product.image
     db.session.delete(product)
     db.session.commit()
+    borrar_foto_producto(foto)
     flash('Producto eliminado', 'warning')
     return redirect(url_for('main.products'))
 
@@ -256,6 +315,33 @@ def add_invoice(): # <--- Antes decía add_invoice_post
         return redirect(url_for('main.invoices'))
 
     new_inv = Invoice(customer_id=customer_id, date_created=datetime.now(), total=0)
+    total_acumulado = 0
+
+    # Procesamos los productos marcados en el modal (mismos campos que en edición)
+    for p in Product.query.all():
+        if request.form.get(f'product_{p.id}'):
+            qty = int(request.form.get(f'quantity_{p.id}') or 0)
+            if qty <= 0:
+                continue
+            if qty > p.stock:
+                db.session.rollback()
+                flash(f'Stock insuficiente para {p.name}: quedan {p.stock} unidades', 'danger')
+                return redirect(url_for('main.invoices'))
+            new_inv.items.append(InvoiceItem(product_id=p.id, quantity=qty, price=p.price))
+            total_acumulado += p.price * qty
+            p.stock -= qty  # Descontamos del inventario lo vendido
+
+    if not new_inv.items:
+        db.session.rollback()
+        flash('Error: Seleccione al menos un producto', 'danger')
+        return redirect(url_for('main.invoices'))
+
+    new_inv.total = total_acumulado
+    db.session.add(new_inv)
+    db.session.commit()
+
+    flash(f'Factura #{new_inv.id} creada correctamente', 'success')
+    return redirect(url_for('main.invoices'))
 
 
 @main.route('/invoices/edit/<int:id>', methods=['POST'])
@@ -263,11 +349,14 @@ def add_invoice(): # <--- Antes decía add_invoice_post
 def edit_invoice(id):  # Cambiamos el nombre aquí para que coincida con el HTML
     invoice = Invoice.query.get_or_404(id)
 
-    # 1. Eliminamos los items anteriores para reemplazarlos por los nuevos
-    InvoiceItem.query.filter_by(invoice_id=id).delete()
+    # 1. Devolvemos al inventario lo de la versión anterior y quitamos esos items
+    for item in list(invoice.items):
+        if item.product:
+            item.product.stock += item.quantity
+        invoice.items.remove(item)
 
     # 2. Actualizamos el cliente
-    invoice.customer_id = request.form.get('customer_id')
+    invoice.customer_id = request.form.get('customer_id') or invoice.customer_id
 
     total_acumulado = 0
     all_prods = Product.query.all()
@@ -275,16 +364,20 @@ def edit_invoice(id):  # Cambiamos el nombre aquí para que coincida con el HTML
     # 3. Procesamos los productos seleccionados en el modal de edición
     for p in all_prods:
         if request.form.get(f'product_{p.id}'):
-            qty = int(request.form.get(f'quantity_{p.id}', 0))
+            qty = int(request.form.get(f'quantity_{p.id}') or 0)
             if qty > 0:
-                item = InvoiceItem(
-                    invoice_id=id,
-                    product_id=p.id,
-                    quantity=qty,
-                    price=p.price
-                )
+                if qty > p.stock:
+                    db.session.rollback()
+                    flash(f'Stock insuficiente para {p.name}: quedan {p.stock} unidades', 'danger')
+                    return redirect(url_for('main.invoices'))
+                invoice.items.append(InvoiceItem(product_id=p.id, quantity=qty, price=p.price))
                 total_acumulado += (p.price * qty)
-                db.session.add(item)
+                p.stock -= qty
+
+    if not invoice.items:
+        db.session.rollback()
+        flash('Error: la factura debe tener al menos un producto', 'danger')
+        return redirect(url_for('main.invoices'))
 
     # 4. Actualizamos el total de la factura
     invoice.total = total_acumulado
@@ -298,6 +391,10 @@ def edit_invoice(id):  # Cambiamos el nombre aquí para que coincida con el HTML
 @login_required
 def delete_invoice(id):
     invoice = Invoice.query.get_or_404(id)
+    # Al anular la factura, lo vendido vuelve al inventario
+    for item in invoice.items:
+        if item.product:
+            item.product.stock += item.quantity
     db.session.delete(invoice)
     db.session.commit()
     flash('Factura eliminada', 'warning')

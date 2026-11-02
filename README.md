@@ -13,6 +13,16 @@ arquitectura **MVC**, y persistencia de datos con **PostgreSQL**.
 
 ---
 
+## 🎬 Video del Sistema
+
+<p align="center">
+  <img src="docs/video/recorrido-sistema.gif" alt="Recorrido por el sistema" width="800">
+</p>
+
+<p align="center">
+  <a href="docs/video/recorrido-sistema.mp4"><strong>▶ Ver el video completo en MP4</strong></a>
+</p>
+
 ## 📸 Vista Previa
 
 <p align="center">
@@ -25,18 +35,30 @@ arquitectura **MVC**, y persistencia de datos con **PostgreSQL**.
   <img src="docs/screenshots/clientes.png" alt="Gestión de clientes" width="270">
 </p>
 
+**Inventario de productos con fotos**
+<img src="docs/screenshots/productos.png" alt="Inventario de productos">
+
 <details>
-<summary><strong>Ver más capturas</strong> (inventario, reportes y ticket de factura)</summary>
+<summary><strong>Ver más capturas</strong> (formularios, detalle de factura, reportes, ticket y usuarios)</summary>
 <br>
 
-**Inventario de productos**
-<img src="docs/screenshots/productos.png" alt="Inventario de productos">
+**Nuevo producto con foto y vista previa**
+<img src="docs/screenshots/producto-nuevo.png" alt="Formulario de nuevo producto">
+
+**Crear factura**
+<img src="docs/screenshots/factura-nueva.png" alt="Formulario de nueva factura">
+
+**Detalle de factura**
+<img src="docs/screenshots/factura-detalle.png" alt="Detalle de factura">
 
 **Reportes en PDF**
 <img src="docs/screenshots/reportes.png" alt="Módulo de reportes">
 
 **Ticket de factura impreso**
-<img src="docs/screenshots/ticket-factura.png" alt="Ticket de factura" width="350">
+<img src="docs/screenshots/ticket-factura.png" alt="Ticket de factura">
+
+**Usuarios y roles**
+<img src="docs/screenshots/configuracion.png" alt="Configuración de usuarios">
 
 </details>
 
@@ -45,13 +67,17 @@ arquitectura **MVC**, y persistencia de datos con **PostgreSQL**.
 ## 🚀 Características Principales
 
 - **Gestión de clientes:** registro y control de datos fiscales/contacto.
-- **Catálogo de productos/servicios:** con precio unitario e impuestos.
+- **Catálogo de productos/servicios:** con precio, código de barras, foto
+  del producto e importación masiva desde Excel.
+- **Control de inventario:** cada factura descuenta el stock, no permite
+  vender más de lo disponible y lo devuelve al editar o anular la factura.
 - **Generación de facturas:** cálculo automático de subtotal, impuestos y
   total; numeración correlativa de comprobantes.
 - **Exportación a PDF:** generación de la factura lista para enviar al
   cliente.
 - **Historial de ventas:** consulta de facturas emitidas por fecha o cliente.
-- **Autenticación de usuarios:** control de acceso al sistema.
+- **Autenticación de usuarios:** control de acceso, alta de usuarios con rol (Administrador / Vendedor)
+  y contraseñas encriptadas para los usuarios nuevos.
 
 ## 🛠️ Tecnologías Utilizadas
 
@@ -138,6 +164,13 @@ servidor en `http://127.0.0.1:5000`.
 > Para tener acceso, crea un usuario directamente en la tabla `user` (o desde
 > el módulo **Configuración** una vez dentro del sistema con un usuario
 > existente).
+
+> **Actualización desde una versión anterior:** si tu base ya existía, agrega
+> la columna de fotos de productos:
+>
+> ```sql
+> ALTER TABLE products ADD COLUMN image VARCHAR(255);
+> ```
 
 ---
 

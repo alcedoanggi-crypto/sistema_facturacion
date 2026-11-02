@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container-fluid py-4" style="background-color: #f8f9fa;">
+<div class="container-fluid py-4">
     <!-- Encabezado -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -134,12 +134,12 @@
             datasets: [{
                 label: 'Ventas Diarias',
                 data: {{ data_ventas | safe }},
-                backgroundColor: 'rgba(13, 110, 253, 0.7)', // Azul con transparencia
-                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(139, 92, 246, 0.75)', // Violeta del tema
+                borderColor: '#7c3aed',
                 borderWidth: 2,
                 borderRadius: 8, // Bordes redondeados para un look moderno
                 borderSkipped: false,
-                hoverBackgroundColor: '#0d6efd'
+                hoverBackgroundColor: '#6366f1'
             }]
         },
         options: {
@@ -148,7 +148,7 @@
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#1e293b',
+                    backgroundColor: '#1e1b4b',
                     padding: 12,
                     callbacks: {
                         label: function(context) {
@@ -182,7 +182,7 @@
             labels: ['Productos', 'Clientes'],
             datasets: [{
                 data: [{{ count_productos }}, {{ count_clientes }}],
-                backgroundColor: ['#0d6efd', '#ffc107'],
+                backgroundColor: ['#6366f1', '#14b8a6'],
                 hoverOffset: 12,
                 borderWidth: 0
             }]

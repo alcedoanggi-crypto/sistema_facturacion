@@ -92,7 +92,8 @@ def dashboard():
     ventas_diarias = db.session.query(
         db.func.date(Invoice.date_created).label('fecha'),
         db.func.sum(Invoice.total).label('total')
-    ).group_by('fecha').order_by('fecha').limit(10).all()
+    ).group_by('fecha').order_by(db.desc('fecha')).limit(10).all()
+    ventas_diarias = list(reversed(ventas_diarias))  # los 10 días más recientes, en orden cronológico
 
     labels_ventas = [str(v.fecha) for v in ventas_diarias] if ventas_diarias else ["Sin datos"]
     data_ventas = [float(v.total) for v in ventas_diarias] if ventas_diarias else [0]
